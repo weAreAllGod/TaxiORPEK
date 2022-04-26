@@ -87,6 +87,7 @@ export default {
       lushuList:[],
       polyList:[],
       st:null,
+      speedBeiShu:10
     };
   },
   created: function() {
@@ -183,7 +184,7 @@ export default {
       var point1 = [];
       var landmarkPoisList=[];
       // console.log("====================================");
-      var speedBeiShu=1;
+      
 
       for (var i = 0; i < pathOne1.length; i++) {
           point1.push(new BMapGL.Point(this.allDataInFile[pathOne1[i][0]][0],this.allDataInFile[pathOne1[i][0]][1]));
@@ -199,7 +200,7 @@ export default {
             // landmarkPoisList.push({lng:this.allDataInFile[pathOne1[i+1][0]][0],lat:this.allDataInFile[pathOne1[i+1][0]][1],html:'等待点',pauseTime:Math.floor(pathOne1[i][1]["holding_time"]/speedBeiShu)});
 
             }
-            landmarkPoisList.push({lng:this.allDataInFile[pathOne1[i][0]][0],lat:this.allDataInFile[pathOne1[i][0]][1],html:'等待点',pauseTime:Math.floor(pathOne1[i][1]["holding_time"]/speedBeiShu)});
+            landmarkPoisList.push({lng:this.allDataInFile[pathOne1[i][0]][0],lat:this.allDataInFile[pathOne1[i][0]][1],html:'等待点',pauseTime:Math.floor(pathOne1[i][1]["holding_time"]/this.speedBeiShu)});
       }
      
       }
@@ -212,7 +213,7 @@ export default {
       var lushu = new BMapGLLib.LuShu(this.map, point1, {
                     defaultContent: "到达"+index, // "信息窗口文案"
                     autoView: false, // 是否开启自动视野调整，如果开启那么路书在运动过程中会根据视野自动调整             
-                    speed: 5.14*speedBeiShu,
+                    speed: 5.14*this.speedBeiShu,
                     // icon: new BMapGLGL.Icon('./images/car.png', new BMapGLGL.Size(32, 32), { anchor: new BMapGLGL.Size(10, 10) }),
                     icon: new BMapGL.Icon(planColor, new BMapGL.Size(28, 28), { anchor: new BMapGL.Size(14, 14) }),
                     enableRotation: true, // 是否设置marker随着道路的走向进行旋转
@@ -228,10 +229,10 @@ export default {
 
         }else{   
         // clearTimeout(this.st); 
-        console.log("gap",Math.floor(timeGap/speedBeiShu))  
+        console.log("gap",Math.floor(timeGap/this.speedBeiShu))  
         this.st=setTimeout(()=>{
         this.loardPath3(idx+1)
-        },Math.floor(timeGap/speedBeiShu));
+        },Math.floor(timeGap/this.speedBeiShu));
         }     
       
     },
