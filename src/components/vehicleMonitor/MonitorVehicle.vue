@@ -159,13 +159,23 @@ export default {
     },
 
     loardPath3:function(idx){
-      console.log(this.scheduledByMan);
+      // console.log(this.scheduledByMan);
+      var unixtime_ms1 = new Date().getTime();
       var index=this.scheduledByMan["lordOrder"][idx];
       var nextIndex=this.scheduledByMan["lordOrder"][idx+1];
       var pathOne1=this.scheduledByMan[index]["path"];
-      var unixtime_ms = new Date().getTime();
+      
       var thisStartTime=this.scheduledByMan[index]["path"][0][1]["departure_time"];
       var nextStartTime=this.scheduledByMan[nextIndex]["path"][0][1]["departure_time"];
+      var goNow=0;
+      if (nextStartTime===thisStartTime){
+        console.log("gap1",""+idx+"-"+index,"-加载下一个点等待时间-",(new Date(nextStartTime).getTime()-new Date(thisStartTime).getTime())/this.speedBeiShu);
+        this.st=setTimeout(()=>{
+          this.loardPath3(idx+1)
+        },0);
+        goNow=1;
+
+      }
       
       var AorD1=this.scheduledByMan[index]["AorD"];
       var color1="black";
@@ -193,11 +203,6 @@ export default {
             // 第一个点如果就是等待点，第二个点将发生跳跃，为了解决这个问题让他在第二个点处等待
             if (i===0){
               continue;
-            //   console.log("确实等待");
-            //   var newLng=this.allDataInFile[pathOne1[i][0]][0]+(this.allDataInFile[pathOne1[i+1][0]][0]-this.allDataInFile[pathOne1[i][0]][0])/100;
-            //   var newLat=this.allDataInFile[pathOne1[i][0]][1]+(this.allDataInFile[pathOne1[i+1][0]][1]-this.allDataInFile[pathOne1[i][0]][1]/100);
-            //  landmarkPoisList.push({lng:newLng,lat:newLat,html:'等待点',pauseTime:Math.floor(pathOne1[i][1]["holding_time"]/speedBeiShu)}); 
-            // landmarkPoisList.push({lng:this.allDataInFile[pathOne1[i+1][0]][0],lat:this.allDataInFile[pathOne1[i+1][0]][1],html:'等待点',pauseTime:Math.floor(pathOne1[i][1]["holding_time"]/speedBeiShu)});
 
             }
             landmarkPoisList.push({lng:this.allDataInFile[pathOne1[i][0]][0],lat:this.allDataInFile[pathOne1[i][0]][1],html:'等待点',pauseTime:Math.floor(pathOne1[i][1]["holding_time"]/this.speedBeiShu)});
@@ -211,7 +216,7 @@ export default {
           });
       this.map.addOverlay(pl1);
       var lushu = new BMapGLLib.LuShu(this.map, point1, {
-                    defaultContent: "到达"+index, // "信息窗口文案"
+                    defaultContent: ""+idx+"-"+index, // "信息窗口文案"
                     autoView: false, // 是否开启自动视野调整，如果开启那么路书在运动过程中会根据视野自动调整             
                     speed: 5.14*this.speedBeiShu,
                     // icon: new BMapGLGL.Icon('./images/car.png', new BMapGLGL.Size(32, 32), { anchor: new BMapGLGL.Size(10, 10) }),
@@ -222,17 +227,20 @@ export default {
       lushu.start();
       this.lushuList.push(lushu);
       this.polyList.push(pl1);    
-      // 在这里判断，加载下一个到底还需要多久   
-      var timeGap=new Date(nextStartTime).getTime()-new Date(thisStartTime).getTime();
+      var unixtime_ms2 = new Date().getTime();
+      // 在这里判断，加载下一个到底还需要多久,减去代码运行的时间
+      var timeGap=new Date(nextStartTime).getTime()-new Date(thisStartTime).getTime()-(unixtime_ms2-unixtime_ms1);
         if (idx===10){
           clearTimeout(this.st);
 
         }else{   
-        // clearTimeout(this.st); 
-        console.log("gap",Math.floor(timeGap/this.speedBeiShu))  
-        this.st=setTimeout(()=>{
-        this.loardPath3(idx+1)
-        },Math.floor(timeGap/this.speedBeiShu));
+          if (goNow==0){
+             console.log("gap",""+idx+"-"+index,"-加载下一个点等待时间-",timeGap/this.speedBeiShu); 
+              this.st=setTimeout(()=>{
+              this.loardPath3(idx+1)
+              },timeGap/this.speedBeiShu);
+          }
+       
         }     
       
     },
