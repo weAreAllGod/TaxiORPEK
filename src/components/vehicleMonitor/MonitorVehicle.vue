@@ -10,49 +10,40 @@
     <div id="controlBar">
       <div id="example">    
        
-          <div class="shownTaxi" @click="loardPolyline">
+          <div class="shownTaxi" @click="loardRunWay">
             <img
               src="../../../static/img/bus_orange_s.png"
               alt="Overspeed Car"
-            /><span>滑行道-</span>
+            /><span>滑行道</span>
           </div> 
 
 
-          <div class="shownPoint" @click="loardPEKGrapyData">
+          <div class="shownPoint" @click="loardMarkers">
             <img
               src="../../../static/img/bus_purple_s.png"
               alt="Online Car"
-            /><span >冲突点-</span>
+            /><span >冲突点</span>
           </div>   
 
 
-          <div class="cleanAll" @click="cleanOverlayers">
+          <div class="cleanAll" @click="loardLabels">
             <img
               src="../../../static/img/bus_gray_s.png"
               alt="Offline Car"
-            /><span>清除掉-</span>
+            /><span>标签</span>
           </div> 
 
- 
-          <div class="test1" @click="loardPath">
-            
-            <img
-              src="../../../static/img/bus_yellow_s.png"
-              alt="Stop Car"
-            /><span>加载路1--</span>
-          </div>      
- 
           <div class="test2" @click="loardPath3(0)">   
             <img
               src="../../../static/img/bus_yellow_s.png"
               alt="Stop Car"
-            /><span>路书图2--</span>
+            /><span>计划</span>
           </div>   
           <div class="test2" @click="cleanLushuTest">   
             <img
               src="../../../static/img/bus_yellow_s.png"
               alt="Stop Car"
-            /><span>清路书---</span>
+            /><span>清楚</span>
           </div>     
 
       </div>
@@ -77,7 +68,6 @@ export default {
   /* eslint-disable no-undef */
   data() {
     return {
-
       map: null, // 地图控件
       // Loading 遮罩层
       loading: true,
@@ -87,7 +77,13 @@ export default {
       lushuList:[],
       polyList:[],
       st:null,
-      speedBeiShu:10
+      speedBeiShu:40,
+      loardRunwayValue:0,
+      loardMarkerValue:0,
+      labelValue:0,
+      runWayList:[],
+      markerList:[],
+      labelList:[]
     };
   },
   created: function() {
@@ -106,8 +102,179 @@ export default {
 
   watch: {
 
+
   },
   methods: {
+    loardRunWay:function(){
+      if (this.loardRunwayValue==0){
+        // 执行加载方法
+        this.loardPolyline();
+        // console.log("执行了加载方法");
+        this.loardRunwayValue=1;
+        // console.log(this.loardRunwayValue);
+      }else{
+        this.clearPolyline();
+        this.loardRunwayValue=0;
+
+      }
+    },
+    loardMarkers:function(){
+      if (this.loardMarkerValue==0){
+      console.log("lardMarkers");
+      this.loardMarkerValue=1;
+      //先绘制parkingPosition
+      //,{"imageOffset":new BMapGL.Size(-36, -22)}
+      var marksize=9;
+      var myRedIcon = new BMapGL.Icon('../static/img/point1.png', new BMapGL.Size(marksize, marksize));
+      // var myRedIcon = new BMapGL.Icon('../static/img/point4.png', new BMapGL.Size(9, 27));
+      for (var p in this.typeOfPosition["parkingPosition"]){
+        var thisLable=this.typeOfPosition["parkingPosition"][p];
+        var point=new BMapGL.Point(this.allDataInFile[thisLable][0],this.allDataInFile[thisLable][1]);
+        var newMarker=new BMapGL.Marker(point,{icon: myRedIcon});
+        this.map.addOverlay(newMarker);
+        this.markerList.push(newMarker)
+        
+        // this.map.Marker.isTrue=False;
+      }
+      // var myIcon = new BMapGL.Icon("allStyleMarker.png", new BMapGL.Size(23, 25),{
+      // anchor: new BMapGL.Size(10, 30)
+      //  });
+      //跑道的进入点
+      var myYellowIcon = new BMapGL.Icon('../static/img/point6.png', new BMapGL.Size(marksize, marksize));
+      // var myYellowIcon = new BMapGL.Icon('../static/img/point5.png');
+      for (var p in this.typeOfPosition["runwayEntrance"]){
+        var thisLable=this.typeOfPosition["runwayEntrance"][p];
+        var point=new BMapGL.Point(this.allDataInFile[thisLable][0],this.allDataInFile[thisLable][1]);
+        var newMarker=new BMapGL.Marker(point,{icon: myYellowIcon});
+        this.map.addOverlay(newMarker);
+        this.markerList.push(newMarker);
+      }
+      //跑道的退出点
+      var myPurpleIcon = new BMapGL.Icon('../static/img/point5.png', new BMapGL.Size(marksize, marksize));
+      // var myPurpleIcon = new BMapGL.Icon('../static/img/point6.png');
+      for (var p in this.typeOfPosition["runwayExit"]){
+        var thisLable=this.typeOfPosition["runwayExit"][p];
+        var point=new BMapGL.Point(this.allDataInFile[thisLable][0],this.allDataInFile[thisLable][1])
+        var newMarker=new BMapGL.Marker(point,{icon: myPurpleIcon});
+        this.map.addOverlay(newMarker);
+        this.markerList.push(newMarker)
+      }
+      //行进过程中的交叉点
+      //跑道的退出点
+      var myBlueIcon = new BMapGL.Icon('../static/img/point4.png', new BMapGL.Size(marksize, marksize));
+      // var myBlueIcon = new BMapGL.Icon('../static/img/point7.png');
+      for (var p in this.typeOfPosition["intersection"]){
+        var thisLable=this.typeOfPosition["intersection"][p];
+        var point=new BMapGL.Point(this.allDataInFile[thisLable][0],this.allDataInFile[thisLable][1]);
+        var newMarker=new BMapGL.Marker(point,{icon: myBlueIcon});
+        this.map.addOverlay(newMarker);
+        this.markerList.push(newMarker)
+      }
+      }else{
+        this.loardMarkerValue=0;
+        this.clearMarkers()
+
+      }
+
+    },
+    loardLabels:function(){
+      if (this.labelValue==0){
+      this.labelValue=1;
+      
+      for (var p in this.typeOfPosition["parkingPosition"]){
+        var thisLable=this.typeOfPosition["parkingPosition"][p];
+        var point=new BMapGL.Point(this.allDataInFile[thisLable][0],this.allDataInFile[thisLable][1]);
+        var opts = {
+        position : point,    // 指定文本标注所在的地理位置
+        offset   : new BMapGL.Size(0, -0)    //设置文本偏移量
+        }
+        var label = new BMapGL.Label(thisLable, opts);  // 创建文本标注对象
+        label.setStyle({
+        color : 'black',
+        fontSize : '4px',
+        height : '0px',
+        lineHeight : '0px',
+        padding:"0px",
+        border:"0px",
+        fontFamily: 'Times New Roman'
+        });
+        this.map.addOverlay(label); 
+        this.labelList.push(label)
+      }
+      // var myIcon = new BMapGL.Icon("allStyleMarker.png", new BMapGL.Size(23, 25),{
+      // anchor: new BMapGL.Size(10, 30)
+      //  });
+      //跑道的进入点
+      for (var p in this.typeOfPosition["runwayEntrance"]){
+        var thisLable=this.typeOfPosition["runwayEntrance"][p];
+        var point=new BMapGL.Point(this.allDataInFile[thisLable][0],this.allDataInFile[thisLable][1]);
+        var opts = {
+        position : point,    // 指定文本标注所在的地理位置
+        offset   : new BMapGL.Size(0, -0)    //设置文本偏移量
+        }
+        var label = new BMapGL.Label(thisLable, opts);  // 创建文本标注对象
+        label.setStyle({
+        color : 'black',
+        fontSize : '4px',
+        height : '0px',
+        lineHeight : '0px',
+        padding:"0px",
+        border:"0px",
+        fontFamily: 'Times New Roman'
+        });
+        this.map.addOverlay(label); 
+        this.labelList.push(label)
+      }
+      //跑道的退出点
+      for (var p in this.typeOfPosition["runwayExit"]){
+        var thisLable=this.typeOfPosition["runwayExit"][p];
+        var point=new BMapGL.Point(this.allDataInFile[thisLable][0],this.allDataInFile[thisLable][1])
+        // var thisLable=new BMapGL.Label(thisPoint,{offset:new BMapGL.Size(20,-10)});
+        var opts = {
+        position : point,    // 指定文本标注所在的地理位置
+        offset   : new BMapGL.Size(0, -0)    //设置文本偏移量
+        }
+        var label = new BMapGL.Label(thisLable, opts);  // 创建文本标注对象
+        label.setStyle({
+        color : 'black',
+        fontSize : '4px',
+        height : '0px',
+        lineHeight : '0px',
+        padding:"0px",
+        border:"0px",
+        fontFamily: 'Times New Roman'
+        });
+        this.map.addOverlay(label); 
+        this.labelList.push(label)
+      }
+      //行进过程中的交叉点
+      // var myBlueIcon = new BMapGL.Icon('../static/img/point7.png');
+      for (var p in this.typeOfPosition["intersection"]){
+        var thisLable=this.typeOfPosition["intersection"][p];
+        var point=new BMapGL.Point(this.allDataInFile[thisLable][0],this.allDataInFile[thisLable][1]);
+        var opts = {
+        position : point,    // 指定文本标注所在的地理位置
+        offset   : new BMapGL.Size(0, -0)    //设置文本偏移量
+        }
+        var label = new BMapGL.Label(thisLable, opts);  // 创建文本标注对象
+        label.setStyle({
+        color : 'black',
+        fontSize : '4px',
+        height : '0px',
+        lineHeight : '0px',
+        padding:"0px",
+        border:"0px",
+        fontFamily: 'Times New Roman'
+        });
+        this.map.addOverlay(label); 
+        this.labelList.push(label)
+      }   
+      }else{
+        this.labelValue=0;
+        this.cleanLabels()
+      }
+     
+    },
 
     // 判断传入的节点是不是选中节点的子节点
     // 初始化百度地图
@@ -181,7 +348,7 @@ export default {
       var color1="black";
       var planColor="../static/img/plan_red.png"
       var defartContentText="";
-      if (AorD1="A"){
+      if (AorD1=="A"){
         color1="black";
         planColor="../static/img/plan_red.png";
         defartContentText="到达";
@@ -193,8 +360,6 @@ export default {
         }
       var point1 = [];
       var landmarkPoisList=[];
-      // console.log("====================================");
-      
 
       for (var i = 0; i < pathOne1.length; i++) {
           point1.push(new BMapGL.Point(this.allDataInFile[pathOne1[i][0]][0],this.allDataInFile[pathOne1[i][0]][1]));
@@ -203,9 +368,8 @@ export default {
             // 第一个点如果就是等待点，第二个点将发生跳跃，为了解决这个问题让他在第二个点处等待
             if (i===0){
               continue;
-
             }
-            landmarkPoisList.push({lng:this.allDataInFile[pathOne1[i][0]][0],lat:this.allDataInFile[pathOne1[i][0]][1],html:'等待点',pauseTime:Math.floor(pathOne1[i][1]["holding_time"]/this.speedBeiShu)});
+            landmarkPoisList.push({lng:this.allDataInFile[pathOne1[i][0]][0],lat:this.allDataInFile[pathOne1[i][0]][1],html:'holding',pauseTime:Math.floor(pathOne1[i][1]["holding_time"]/this.speedBeiShu)});
       }
      
       }
@@ -271,62 +435,34 @@ export default {
           new BMapGL.Point(this.allDataInFile[p1][0],this.allDataInFile[p1][1]),
           new BMapGL.Point(this.allDataInFile[p2][0],this.allDataInFile[p2][1]),
           ], {
-              strokeColor: 'black',
+              strokeColor: 'white',
               strokeWeight: 2,
               strokeOpacity: 1
           });
+          this.runWayList.push(polyline);
           this.map.addOverlay(polyline);
-
       }}
     ,
+    clearPolyline:function(){
+        // 给需要的点之间添加边
+      while(this.runWayList.length>0){
+      var thisRunway=this.runWayList.pop();
+      this.map.removeOverlay(thisRunway);
+      }
+    },
+    clearMarkers:function(){
+        // 给需要的点之间添加边
+      while(this.markerList.length>0){
+      var thisMk=this.markerList.pop();
+      this.map.removeOverlay(thisMk);
+      }
+    },
+    cleanLabels:function(){
+       while(this.labelList.length>0){
+      var thisLb=this.labelList.pop();
+      this.map.removeOverlay(thisLb);
+      }
 
-    loardPEKGrapyData:function(){
-      console.log(this.allDataInFile);
-      //先绘制parkingPosition
-      var myRedIcon = new BMapGL.Icon('../static/img/allStyleMarker.png', new BMapGL.Size(18, 27),{"imageOffset":new BMapGL.Size(-36, -22)});
-      // var myRedIcon = new BMapGL.Icon('../static/img/point4.png', new BMapGL.Size(9, 27));
-      for (var p in this.typeOfPosition["parkingPosition"]){
-        var thisLable=this.typeOfPosition["parkingPosition"][p];
-        var newMarker=new BMapGL.Marker(new BMapGL.Point(this.allDataInFile[thisLable][0],this.allDataInFile[thisLable][1]),{icon: myRedIcon});
-        //   // newMarker.setLabel(new BMapGL.Label(i,{offset:new BMapGL.Size(20,-10)})
-        // newMarker.setLabel(new BMapGL.Label(thisLable,{offset:new BMapGL.Size(20,-10)}));
-        this.map.addOverlay(newMarker);
-        // this.map.Marker.isTrue=False;
-      }
-      // var myIcon = new BMapGL.Icon("allStyleMarker.png", new BMapGL.Size(23, 25),{
-      // anchor: new BMapGL.Size(10, 30)
-      //  });
-      //跑道的进入点
-      var myYellowIcon = new BMapGL.Icon('../static/img/allStyleMarker.png', new BMapGL.Size(18, 27),{"imageOffset":new BMapGL.Size(-54, -22)});
-      // var myYellowIcon = new BMapGL.Icon('../static/img/point5.png');
-      for (var p in this.typeOfPosition["runwayEntrance"]){
-        var thisPoint=this.typeOfPosition["runwayEntrance"][p];
-        var newMarker=new BMapGL.Marker(new BMapGL.Point(this.allDataInFile[thisPoint][0],this.allDataInFile[thisPoint][1]),{icon: myYellowIcon});
-        var thisLable=new BMapGL.Label(thisPoint,{offset:new BMapGL.Size(20,-10)});
-        // newMarker.setLabel(thisLable);
-        this.map.addOverlay(newMarker);
-      }
-      //跑道的退出点
-      var myPurpleIcon = new BMapGL.Icon('../static/img/allStyleMarker.png', new BMapGL.Size(18, 27),{"imageOffset":new BMapGL.Size(-72, -22)});
-      // var myPurpleIcon = new BMapGL.Icon('../static/img/point6.png');
-      for (var p in this.typeOfPosition["runwayExit"]){
-        var thisPoint=this.typeOfPosition["runwayExit"][p];
-        var newMarker=new BMapGL.Marker(new BMapGL.Point(this.allDataInFile[thisPoint][0],this.allDataInFile[thisPoint][1]),{icon: myPurpleIcon});
-        var thisLable=new BMapGL.Label(thisPoint,{offset:new BMapGL.Size(20,-10)});
-        // newMarker.setLabel(thisLable);
-        this.map.addOverlay(newMarker);
-      }
-      //行进过程中的交叉点
-      //跑道的退出点
-      var myBlueIcon = new BMapGL.Icon('../static/img/allStyleMarker.png', new BMapGL.Size(18, 27),{"imageOffset":new BMapGL.Size(-18, -22)});
-      // var myBlueIcon = new BMapGL.Icon('../static/img/point7.png');
-      for (var p in this.typeOfPosition["intersection"]){
-        var thisPoint=this.typeOfPosition["intersection"][p];
-        var newMarker=new BMapGL.Marker(new BMapGL.Point(this.allDataInFile[thisPoint][0],this.allDataInFile[thisPoint][1]),{icon: myBlueIcon});
-        var thisLable=new BMapGL.Label(thisPoint,{offset:new BMapGL.Size(20,-10)});
-        // newMarker.setLabel(thisLable);
-        this.map.addOverlay(newMarker);
-      }
     },
     
     initPEKGrapyData:function(){
