@@ -108,6 +108,9 @@ export const getTypeOfPositionInPEK = () =>
 export const getSheduledByMan = () =>
 ajax1(BASE_URL + `scheduledByMan/`, "GET", {});
 
+export const getPositionByTimeLine =() =>
+ajax1(BASE_URL + `getPositionByTimeLine/`, "GET", {});
+
 
 
 

@@ -17,14 +17,12 @@
             /><span>滑行道</span>
           </div> 
 
-
           <div class="shownPoint" @click="loardMarkers">
             <img
               src="../../../static/img/bus_purple_s.png"
               alt="Online Car"
             /><span >冲突点</span>
           </div>   
-
 
           <div class="cleanAll" @click="loardLabels">
             <img
@@ -37,14 +35,27 @@
             <img
               src="../../../static/img/bus_yellow_s.png"
               alt="Stop Car"
-            /><span>计划</span>
+            /><span>计划开始</span>
           </div>   
+          <div class="test2" @click="pausePath">   
+            <img
+              src="../../../static/img/bus_yellow_s.png"
+              alt="Stop Car"
+            /><span>计划暂停</span>
+          </div>
           <div class="test2" @click="cleanLushuTest">   
             <img
               src="../../../static/img/bus_yellow_s.png"
               alt="Stop Car"
             /><span>清楚</span>
-          </div>     
+          </div>    
+
+            <div class="test2" @click="flushLoard(0)">   
+            <img
+              src="../../../static/img/bus_yellow_s.png"
+              alt="Stop Car"
+            /><span>Flush</span>
+          </div>  
 
       </div>
 
@@ -62,6 +73,7 @@ import {
   getAllPositionDataInPEK,
   getTypeOfPositionInPEK,
   getSheduledByMan,
+  getPositionByTimeLine 
 } from "../../assets/axios/index";
 
 export default {
@@ -74,6 +86,7 @@ export default {
       allDataInFile:"1",
       typeOfPosition:"2",
       scheduledByMan:"3",
+      timeLinePositionData:"4",
       lushuList:[],
       polyList:[],
       st:null,
@@ -81,9 +94,11 @@ export default {
       loardRunwayValue:0,
       loardMarkerValue:0,
       labelValue:0,
+      pausePathValue:0,
       runWayList:[],
       markerList:[],
-      labelList:[]
+      labelList:[],
+      allFlightsInMap:[]
     };
   },
   created: function() {
@@ -275,6 +290,46 @@ export default {
       }
      
     },
+    pausePath:function(){
+      if (this.pausePathValue==0){
+        for (let i=0;i<this.lushuList.length;i++){
+          this.lushuList[i].pause()
+        };
+        this.pausePathValue=1
+      }else{
+        for (let i=0;i<this.lushuList.length;i++){
+          this.lushuList[i].start()
+        };
+        this.pausePathValue=1
+      }
+    },
+    flushLoard:function(timePoint){
+      
+      // , new BMapGL.Size(12, 12)
+      for (let k in this.timeLinePositionData[timePoint]){
+          // console.log(this.timeLinePositionData[i][k])
+          if (k=="time"){continue};
+          // console.log(this.timeLinePositionData[timePoint][k]["lng"],"--",this.timeLinePositionData[timePoint][k]["lat"]);
+          let point=new BMapGL.Point(this.timeLinePositionData[timePoint][k]["lng"],this.timeLinePositionData[timePoint][k]["lat"]);
+          let myIcon = new BMapGL.Icon('../static/img/plan_red.png', new BMapGL.Size(28, 28), { anchor: new BMapGL.Size(14, 14)});
+          // console.log(point);
+          let flightMarker=new BMapGL.Marker(point,{icon: myIcon});
+          flightMarker.setRotation(30);
+          this.map.addOverlay(flightMarker);
+          this.allFlightsInMap.push(flightMarker)
+        };
+        this.st=setTimeout(()=>{
+              while(this.allFlightsInMap.length>0){
+                let tf=this.allFlightsInMap.pop();
+                this.map.removeOverlay(tf);
+
+              }
+              // this.map.clearOverlays();
+              this.flushLoard(timePoint+1)
+        },100);
+      
+
+    },
 
     // 判断传入的节点是不是选中节点的子节点
     // 初始化百度地图
@@ -297,33 +352,7 @@ export default {
       }
       
     },
-    loardPath:function(){
-      console.log(this.scheduledByMan);
-      for (var j=0;j<10;j++){
-        var pathOne2=this.scheduledByMan[j]["path"];
-        var AorD=this.scheduledByMan[j]["AorD"];
-        var point2 = [];
-        console.log("===============================pathOne2");
-        console.log(pathOne2);
-        for (var i = 0; i < pathOne2.length; i++) {
-            point2.push(new BMapGL.Point(this.allDataInFile[pathOne2[i][0]][0],this.allDataInFile[pathOne2[i][0]][1]));
-        }
-        console.log("---------------",j);
-        var color="black";
-        if (AorD="A"){
-          color="red";
-        }else{
-          color="green";
-        };
-        var pl2 = new BMapGL.Polyline(point2, {
-              strokeColor: color,
-              strokeWeight: 2,
-              strokeOpacity: 1
-          });
-        this.map.addOverlay(pl2);
-      }
-      
-    },
+
 
     loardPath3:function(idx){
       // console.log(this.scheduledByMan);
@@ -388,8 +417,9 @@ export default {
                     enableRotation: true, // 是否设置marker随着道路的走向进行旋转
                     landmarkPois:landmarkPoisList,
                 });
-      lushu.start();
+      
       this.lushuList.push(lushu);
+      lushu.start();
       this.polyList.push(pl1);    
       var unixtime_ms2 = new Date().getTime();
       // 在这里判断，加载下一个到底还需要多久,减去代码运行的时间
@@ -486,6 +516,12 @@ export default {
       getSheduledByMan().then(res => {
         // console.log(this.allDataInFile);
         this.scheduledByMan = res.data;
+        // console.log(this.allDataInFile);
+      })
+      .catch(error => console.log(error));
+      getPositionByTimeLine().then(res => {
+        // console.log(this.allDataInFile);
+        this.timeLinePositionData = res.data;
         // console.log(this.allDataInFile);
       })
       .catch(error => console.log(error));
