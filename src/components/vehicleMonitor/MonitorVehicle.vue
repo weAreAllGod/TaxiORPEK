@@ -314,7 +314,9 @@ export default {
           let myIcon = new BMapGL.Icon('../static/img/plan_red.png', new BMapGL.Size(28, 28), { anchor: new BMapGL.Size(14, 14)});
           // console.log(point);
           let flightMarker=new BMapGL.Marker(point,{icon: myIcon});
-          flightMarker.setRotation(30);
+          flightMarker.setRotation(this.timeLinePositionData[timePoint][k]["deg"]);
+          // console.log(this.timeLinePositionData[timePoint][k]);
+          // flightMarker.setRotation(30);
           this.map.addOverlay(flightMarker);
           this.allFlightsInMap.push(flightMarker)
         };
