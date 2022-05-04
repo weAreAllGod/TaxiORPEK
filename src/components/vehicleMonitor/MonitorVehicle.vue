@@ -47,6 +47,12 @@
           <div class="speedBeiShu"  >   
             倍速:{{speedBeiShu}}
           </div> 
+           <div class="test2" @click="testFunc">   
+            <img
+              src="../../../static/img/bus_yellow_s.png"
+            /><span>testPost</span>
+          </div>
+
 
           <!-- <div class="test2" @click="loardPath3(0)">   
             <img
@@ -85,7 +91,8 @@ import {
   getAllPositionDataInPEK,
   getTypeOfPositionInPEK,
   getSheduledByMan,
-  getPositionByTimeLine 
+  getPositionByTimeLine,
+  postTimeIndex
 } from "../../assets/axios/index";
 
 export default {
@@ -102,6 +109,7 @@ export default {
       lushuList:[],
       polyList:[],
       st:null,
+      stInterva:null,
       speedBeiShu:50,
       loardRunwayValue:1,
       loardMarkerValue:0,
@@ -113,7 +121,9 @@ export default {
       allFlightsInMap:[],
       allFlightsLabelInMap:[],
       timeLabel:"xx-xx-xx xx:xx:xx",
-      taxiPlanStartPoint:0
+      taxiPlanStartPoint:0,
+      thisTimeLinePositionData:{}
+      
     };
   },
   created: function() {
@@ -136,6 +146,14 @@ export default {
 
   },
   methods: {
+    testFunc:function(){
+      postTimeIndex({"timeIndex":2}).then((res2) => {
+        console.log(res2)
+
+
+      }).catch(error => console.log(error));
+
+    },
     loardRunWay:function(){
       if (this.loardRunwayValue==0){
         // 执行加载方法
@@ -323,18 +341,29 @@ export default {
     pauseFlushLoard:function(){
         clearTimeout(this.st);
     },
+
+
     flushLoard:function(timePoint){
       try{timePoint=this.taxiPlanStartPoint}catch (e){
         alert("稍等，数据还在加载")
       }
-      
+      // var thisTimeLinePositionData={};
+      // postTimeIndex({"timeIndex":timePoint}).then(async (res2) => {
+      //   console.log("该时刻数据请求完毕");
+      //   thisTimeLinePositionData= await res2["data"];
+      //   for (let k in thisTimeLinePositionData){
+      //     console.log(k)
+      //   }
+      //   console.log(thisTimeLinePositionData);
+      // }).catch(error => console.log(error));
       
       // , new BMapGL.Size(12, 12)
       for (let k in this.timeLinePositionData[timePoint]){
-          // console.log(this.timeLinePositionData[i][k])
+          console.log("------")
           if (k=="time"){continue};
           // console.log(this.timeLinePositionData[timePoint][k]["lng"],"--",this.timeLinePositionData[timePoint][k]["lat"]);
           let point=new BMapGL.Point(this.timeLinePositionData[timePoint][k]["lng"],this.timeLinePositionData[timePoint][k]["lat"]);
+          console.log(point)
           let nextPoint=new BMapGL.Point(this.timeLinePositionData[timePoint][k]["nextLng"],this.timeLinePositionData[timePoint][k]["nextLat"]);
           // console.log(nextPoint);
           var deg = 0;
@@ -398,10 +427,11 @@ export default {
           this.allFlightsLabelInMap.push(flightLabel)
         };
         clearTimeout(this.st);
-        if(this.allFlightsInMap.length==0){
-          alert("此刻无数据，请刷新页面");
-        }else{
-          this.st=setTimeout(()=>{
+        // if(this.taxiPlanStartPoint==this.timeLinePositionData["length"]-1){
+        //   console.log("数据加载完毕");
+        //   clearTimeout(this.st);
+        // }
+        this.st=setTimeout(()=>{
               while(this.allFlightsInMap.length>0){
                 let tf=this.allFlightsInMap.pop();
                 let tfl=this.allFlightsLabelInMap.pop();
@@ -411,19 +441,148 @@ export default {
               // this.map.clearOverlays();
               // console.log(this.timeLinePositionData[timePoint]["time"]);
               
-              try{this.timeLabel=this.timeLinePositionData[timePoint]["time"];}catch (e){
-                    alert("稍等，数据还在加载");
-                    // clearTimeout(this.st);
-              }
+              // try{this.timeLabel=this.timeLinePositionData[timePoint]["time"];}catch (e){
+              //       alert("稍等，数据还在加载");
+              //       // clearTimeout(this.st);
+              // }
+              this.timeLabel=this.timeLinePositionData[timePoint]["time"]
               this.taxiPlanStartPoint+=1;
               this.flushLoard(0)
         },1000/this.speedBeiShu);
-        }
         
       
 
     },
+  // flushLoard2helper:function(){
+    
+  //     // var thisTimeLinePositionData={};
+  //     postTimeIndex({"timeIndex":this.taxiPlanStartPoint}).then(async (res2) => {
+        
+  //       this.thisTimeLinePositionData= await res2["data"];
+  //       console.log("该时刻数据请求完毕",this.thisTimeLinePositionData,this.thisTimeLinePositionData["time"]);
+  //     // , new BMapGL.Size(12, 12)
+  //     for (let k in this.thisTimeLinePositionData){
+  //         console.log("------")
+  //         if (k=="time"){continue};
+  //         // console.log(this.thisTimeLinePositionData["lng"],this.thisTimeLinePositionData["lat"]);
 
+  //         let point=new BMapGL.Point(this.thisTimeLinePositionData[k]["lng"],this.thisTimeLinePositionData[k]["lat"]);
+  //         console.log(point)
+  //         let nextPoint=new BMapGL.Point(this.thisTimeLinePositionData[k]["nextLng"],this.thisTimeLinePositionData[k]["nextLat"]);
+  //         console.log(nextPoint);
+  //         var deg = 0;
+  //         let curPos = this.map.pointToPixel(point);
+  //         let targetPos = this.map.pointToPixel(nextPoint);
+  //         if (targetPos.x != curPos.x) {
+  //           let tan = (targetPos.y - curPos.y) / (targetPos.x - curPos.x);
+  //           let atan = Math.atan(tan);
+  //           deg = atan * 360 / (2 * Math.PI);
+  //           if (targetPos.x < curPos.x) {
+  //           deg = -deg + 90 + 90;
+  //           } else {
+  //           deg = -deg;
+  //           }
+  //           deg=-deg
+  //         } else {
+  //           var disy = targetPos.y - curPos.y;
+  //           var bias = 0;
+  //           if (disy > 0){
+  //             bias = -1
+  //             } 
+  //           else{
+  //             bias = 1
+  //             }
+  //           deg=-bias * 90
+  //         }
+  //         // console.log(this.timeLinePositionData[timePoint][k]["AorD"]);
+  //         let myIcon = new BMapGL.Icon('../static/img/plan_red.png', new BMapGL.Size(28, 28), { anchor: new BMapGL.Size(14, 14)});
+  //         if (this.thisTimeLinePositionData[k]["AorD"]=="A"){
+  //            myIcon = new BMapGL.Icon('../static/img/plan_red.png', new BMapGL.Size(28, 28), { anchor: new BMapGL.Size(14, 14)});
+
+  //         }else{
+  //           myIcon = new BMapGL.Icon('../static/img/plan_blue.png', new BMapGL.Size(28, 28), { anchor: new BMapGL.Size(14, 14)});
+  //         }
+          
+  //         // console.log(point);
+  //         let flightMarker=new BMapGL.Marker(point,{icon: myIcon});
+  //         // flightMarker.setRotation(this.timeLinePositionData[timePoint][k]["deg"]);
+  //         // console.log(this.timeLinePositionData[timePoint][k]);
+  //         flightMarker.setRotation(deg);
+  //         let opts = {
+  //           position: point, // 指定文本标注所在的地理位置
+  //           offset: new BMapGL.Size(10, -0) // 设置文本偏移量
+  //         };
+  //           // 创建文本标注对象
+  //           let flightLabel = new BMapGL.Label(""+k, opts);
+  //           // 自定义文本标注样式
+  //           flightLabel.setStyle({
+  //               color: 'blue',
+  //               borderRadius: '2px',
+  //               borderColor: '#ccc',
+  //               padding: '5px',
+  //               fontSize: '5px',
+  //               height: '6px',
+  //               lineHeight: '6px',
+  //               fontFamily: '微软雅黑'
+  //           });
+  //         this.map.addOverlay(flightLabel);
+  //         this.map.addOverlay(flightMarker);
+  //         this.allFlightsInMap.push(flightMarker);
+  //         this.allFlightsLabelInMap.push(flightLabel)
+  //       };
+
+  //       while(this.allFlightsInMap.length>0){
+  //         let tf=this.allFlightsInMap.pop();
+  //         let tfl=this.allFlightsLabelInMap.pop();
+  //         this.map.removeOverlay(tf);
+  //         this.map.removeOverlay(tfl);}
+  //       this.timeLabel=this.thisTimeLinePositionData["time"]
+  //       this.taxiPlanStartPoint+=1;
+  //       // this.flushLoard(0)
+        
+  //       // console.log(thisTimeLinePositionData);
+  //     }).catch(error => console.log(error));
+      
+
+  // },
+  // flushLoard2:function(){
+
+  //   this.stInterval=setInterval(()=>{
+  //       this.flushLoard2helper()
+  //   },1000);
+
+
+
+  //     // try{timePoint=this.taxiPlanStartPoint}catch (e){
+  //     //   alert("稍等，数据还在加载")
+  //     // }
+      
+  //       // if(this.taxiPlanStartPoint==this.timeLinePositionData["length"]-1){
+  //       //   console.log("数据加载完毕");
+  //       //   clearTimeout(this.st);
+  //       // }
+  //       // this.st=setTimeout(()=>{
+  //       //       while(this.allFlightsInMap.length>0){
+  //       //         let tf=this.allFlightsInMap.pop();
+  //       //         let tfl=this.allFlightsLabelInMap.pop();
+  //       //         this.map.removeOverlay(tf);
+  //       //         this.map.removeOverlay(tfl);
+  //       //       }
+  //       //       // this.map.clearOverlays();
+  //       //       // console.log(this.timeLinePositionData[timePoint]["time"]);
+              
+  //       //       // try{this.timeLabel=this.timeLinePositionData[timePoint]["time"];}catch (e){
+  //       //       //       alert("稍等，数据还在加载");
+  //       //       //       // clearTimeout(this.st);
+  //       //       // }
+  //       //       this.timeLabel=this.timeLinePositionData[timePoint]["time"]
+  //       //       this.taxiPlanStartPoint+=1;
+  //       //       this.flushLoard(0)
+  //       // },1000/this.speedBeiShu);
+        
+      
+
+  //   },
     // 判断传入的节点是不是选中节点的子节点
     // 初始化百度地图
     cleanLushuTest:function(){
@@ -613,12 +772,10 @@ export default {
       })
       .catch(error => console.log(error));
       getPositionByTimeLine().then(res => {
-        // console.log(this.allDataInFile);
         this.timeLinePositionData = res.data;
-        // console.log(this.allDataInFile);
       })
       .catch(error => console.log(error));
-      // console.log(this.allDataInFile);
+      console.log(this.allDataInFile);
     },
     initBaiDuMap: function() {
       // let _this = this

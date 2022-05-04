@@ -112,6 +112,10 @@ export const getPositionByTimeLine =() =>
 ajax1(BASE_URL + `getPositionByTimeLine/`, "GET", {});
 
 
+export const postTimeIndex = data =>
+ajax1(BASE_URL + `getPositionByTimeIndex/`, "POST", data);
+
+
 
 
 
