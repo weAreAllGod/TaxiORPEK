@@ -3,8 +3,7 @@
     <!-- 百度地图 -->
     <div id="map">
       <div id="bm-view"></div>
-
-        
+      
     </div>
 
     <div id="controlBar">
@@ -31,7 +30,25 @@
             /><span>标签</span>
           </div> 
 
-          <div class="test2" @click="loardPath3(0)">   
+          <div class="Flush" @click="flushLoard(0)">   
+            <img
+              src="../../../static/img/bus_yellow_s.png"
+            /><span>计划</span>
+          </div>
+
+          <div class="Flush" @click="pauseFlushLoard">   
+            <img
+              src="../../../static/img/bus_yellow_s.png"
+            /><span>暂停</span>
+          </div>
+          <div class="timeLabel"  >   
+            {{timeLabel}}
+          </div> 
+          <div class="speedBeiShu"  >   
+            倍速:{{speedBeiShu}}
+          </div> 
+
+          <!-- <div class="test2" @click="loardPath3(0)">   
             <img
               src="../../../static/img/bus_yellow_s.png"
               alt="Stop Car"
@@ -48,17 +65,12 @@
               src="../../../static/img/bus_yellow_s.png"
               alt="Stop Car"
             /><span>清楚</span>
-          </div>    
-
-            <div class="test2" @click="flushLoard(0)">   
-            <img
-              src="../../../static/img/bus_yellow_s.png"
-              alt="Stop Car"
-            /><span>Flush</span>
-          </div>  
+          </div>     -->
+        
 
       </div>
 
+    
     </div>
     <div id="CustomControl" style="padding: 7px"></div>
 
@@ -90,15 +102,18 @@ export default {
       lushuList:[],
       polyList:[],
       st:null,
-      speedBeiShu:40,
-      loardRunwayValue:0,
+      speedBeiShu:50,
+      loardRunwayValue:1,
       loardMarkerValue:0,
       labelValue:0,
       pausePathValue:0,
       runWayList:[],
       markerList:[],
       labelList:[],
-      allFlightsInMap:[]
+      allFlightsInMap:[],
+      allFlightsLabelInMap:[],
+      timeLabel:"xx-xx-xx xx:xx:xx",
+      taxiPlanStartPoint:0
     };
   },
   created: function() {
@@ -113,6 +128,7 @@ export default {
     // 初始化百度地图
     this.initBaiDuMap();
     this.initPEKGrapyData();
+   
   },
 
   watch: {
@@ -303,7 +319,15 @@ export default {
         this.pausePathValue=1
       }
     },
+
+    pauseFlushLoard:function(){
+        clearTimeout(this.st);
+    },
     flushLoard:function(timePoint){
+      try{timePoint=this.taxiPlanStartPoint}catch (e){
+        alert("稍等，数据还在加载")
+      }
+      
       
       // , new BMapGL.Size(12, 12)
       for (let k in this.timeLinePositionData[timePoint]){
@@ -311,24 +335,91 @@ export default {
           if (k=="time"){continue};
           // console.log(this.timeLinePositionData[timePoint][k]["lng"],"--",this.timeLinePositionData[timePoint][k]["lat"]);
           let point=new BMapGL.Point(this.timeLinePositionData[timePoint][k]["lng"],this.timeLinePositionData[timePoint][k]["lat"]);
+          let nextPoint=new BMapGL.Point(this.timeLinePositionData[timePoint][k]["nextLng"],this.timeLinePositionData[timePoint][k]["nextLat"]);
+          // console.log(nextPoint);
+          var deg = 0;
+          let curPos = this.map.pointToPixel(point);
+          let targetPos = this.map.pointToPixel(nextPoint);
+          if (targetPos.x != curPos.x) {
+            let tan = (targetPos.y - curPos.y) / (targetPos.x - curPos.x);
+            let atan = Math.atan(tan);
+            deg = atan * 360 / (2 * Math.PI);
+            if (targetPos.x < curPos.x) {
+            deg = -deg + 90 + 90;
+            } else {
+            deg = -deg;
+            }
+            deg=-deg
+          } else {
+            var disy = targetPos.y - curPos.y;
+            var bias = 0;
+            if (disy > 0){
+              bias = -1
+              } 
+            else{
+              bias = 1
+              }
+            deg=-bias * 90
+          }
+          // console.log(this.timeLinePositionData[timePoint][k]["AorD"]);
           let myIcon = new BMapGL.Icon('../static/img/plan_red.png', new BMapGL.Size(28, 28), { anchor: new BMapGL.Size(14, 14)});
+          if (this.timeLinePositionData[timePoint][k]["AorD"]=="A"){
+             myIcon = new BMapGL.Icon('../static/img/plan_red.png', new BMapGL.Size(28, 28), { anchor: new BMapGL.Size(14, 14)});
+
+          }else{
+            myIcon = new BMapGL.Icon('../static/img/plan_blue.png', new BMapGL.Size(28, 28), { anchor: new BMapGL.Size(14, 14)});
+          }
+          
           // console.log(point);
           let flightMarker=new BMapGL.Marker(point,{icon: myIcon});
-          flightMarker.setRotation(this.timeLinePositionData[timePoint][k]["deg"]);
+          // flightMarker.setRotation(this.timeLinePositionData[timePoint][k]["deg"]);
           // console.log(this.timeLinePositionData[timePoint][k]);
-          // flightMarker.setRotation(30);
+          flightMarker.setRotation(deg);
+          let opts = {
+            position: point, // 指定文本标注所在的地理位置
+            offset: new BMapGL.Size(10, -0) // 设置文本偏移量
+          };
+            // 创建文本标注对象
+            let flightLabel = new BMapGL.Label(""+k, opts);
+            // 自定义文本标注样式
+            flightLabel.setStyle({
+                color: 'blue',
+                borderRadius: '2px',
+                borderColor: '#ccc',
+                padding: '5px',
+                fontSize: '5px',
+                height: '6px',
+                lineHeight: '6px',
+                fontFamily: '微软雅黑'
+            });
+          this.map.addOverlay(flightLabel);
           this.map.addOverlay(flightMarker);
-          this.allFlightsInMap.push(flightMarker)
+          this.allFlightsInMap.push(flightMarker);
+          this.allFlightsLabelInMap.push(flightLabel)
         };
-        this.st=setTimeout(()=>{
+        clearTimeout(this.st);
+        if(this.allFlightsInMap.length==0){
+          alert("此刻无数据，请刷新页面");
+        }else{
+          this.st=setTimeout(()=>{
               while(this.allFlightsInMap.length>0){
                 let tf=this.allFlightsInMap.pop();
+                let tfl=this.allFlightsLabelInMap.pop();
                 this.map.removeOverlay(tf);
-
+                this.map.removeOverlay(tfl);
               }
               // this.map.clearOverlays();
-              this.flushLoard(timePoint+1)
-        },100);
+              // console.log(this.timeLinePositionData[timePoint]["time"]);
+              
+              try{this.timeLabel=this.timeLinePositionData[timePoint]["time"];}catch (e){
+                    alert("稍等，数据还在加载");
+                    // clearTimeout(this.st);
+              }
+              this.taxiPlanStartPoint+=1;
+              this.flushLoard(0)
+        },1000/this.speedBeiShu);
+        }
+        
       
 
     },
@@ -596,6 +687,12 @@ export default {
       height: 100%;
       width: 100%;
     }
+    #timeLabel{
+      height: 20px;
+      width: 30px;
+      float: right;
+      z-index: 1;
+    }
     #searchCar {
       margin-top: -84vh;
       margin-left: 42vw;
@@ -621,11 +718,23 @@ export default {
       justify-content: flex-start;
       div{
         margin: 2vh 1vw 2vh 1vw;
+        
 
       }
+      .timeLabel{
+          color: rgb(226, 223, 223);
+          font-size: 28px;
+          border:3px solid rgb(243, 14, 14);
+          float: right;
+          
+        }
+      .speedBeiShu{
+        color: rgb(161, 155, 155);
+          font-size: 18px;
+          border:3px solid rgb(8, 236, 39);
+          float: right;
 
-
-
+      }
       // .shownTaxi{
       //     color: #ffffff;
       //     font-size: 1.296vh;
